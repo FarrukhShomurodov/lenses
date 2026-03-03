@@ -270,42 +270,6 @@
                         <div>В наличии: {{ $product->stock->quantity }}</div>
                     @endif
 
-                    <div style="margin-top: 10px;">
-                        @if($product->manufacturer)
-                            <div><strong>Производитель:</strong> {{ $product->manufacturer }}</div>
-                        @endif
-                        @if($product->article)
-                            <div><strong>Артикул:</strong> {{ $product->article }}</div>
-                        @endif
-                        @if($product->model)
-                            <div><strong>Модель:</strong> {{ $product->model }}</div>
-                        @endif
-                        @if($product->coating)
-                            <div><strong>Покрытие:</strong> {{ $product->coating }}</div>
-                        @endif
-                        @if($product->index)
-                            <div><strong>Индекс:</strong> {{ $product->index }}</div>
-                        @endif
-                        @if($product->sph)
-                            <div><strong>Сфера (SPH):</strong> {{ $product->sph }}</div>
-                        @endif
-                        @if($product->cyl)
-                            <div><strong>Цилиндр (CYL):</strong> {{ $product->cyl }}</div>
-                        @endif
-                        @if($product->axis)
-                            <div><strong>Ось (AXIS):</strong> {{ $product->axis }}</div>
-                        @endif
-                        @if($product->family)
-                            <div><strong>Семейство:</strong> {{ $product->family }}</div>
-                        @endif
-                        @if($product->color)
-                            <div><strong>Цвет:</strong> {{ $product->color }}</div>
-                        @endif
-                        @if($product->option)
-                            <div><strong>Опция:</strong> {{ $product->option }}</div>
-                        @endif
-                    </div>
-
                     @if($attributesGrouped->isNotEmpty())
                         <div>
                             Атрибуты:
