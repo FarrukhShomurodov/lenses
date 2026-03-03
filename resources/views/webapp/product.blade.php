@@ -513,45 +513,6 @@
                 });
         }
 
-        document.querySelector(".add-to-cart").addEventListener("click", function () {
-            // RX FORM DATA
-            const sph = document.getElementById('rx-sph').value;
-            const cyl = document.getElementById('rx-cyl').value;
-            const axis = document.getElementById('rx-axis').value;
-            const add = document.getElementById('rx-add').value;
-            const prism = document.getElementById('rx-prism').value;
-
-            fetch("/api/webapp/cart/add", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": csrf
-                },
-                body: JSON.stringify({
-                    product_id: productId,
-                    chat_id: userId,
-                    rx: { sph, cyl, axis, add, prism }
-                })
-            })
-                .then(r => r.json())
-                .then(data => {
-                    if (!data.success) {
-                        showError(data.message ?? "{{ __('webapp.add_error') }}");
-                        return;
-                    }
-
-                    updateBadge(data.count);
-                    this.style.display = "none";
-
-                    const controls = document.getElementById("qty-controls");
-                    controls.dataset.itemId = data.item_id;
-                    document.getElementById("qty-value").innerText = 1;
-                    controls.style.display = "flex";
-
-                    tg.HapticFeedback.notificationOccurred("success");
-                });
-        });
-
         document.querySelector(".qty-plus").addEventListener("click", () => {
             const itemId = document.getElementById("qty-controls").dataset.itemId;
             updateQty(itemId, +1);
