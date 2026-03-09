@@ -21,11 +21,23 @@ class OrderController
         $pdf->loadView('admin.orders.invoice', compact('order'));
         return $pdf->download('invoice_order_' . $order->id . '.pdf');
     }
+    
     public function index(Request $request): View
     {
         $dateFrom = $request->query('date_from');
         $dateTo = $request->query('date_to');
         $search = trim((string) $request->query('search', ''));
+
+        $sortBy = in_array($request->query('sort_by'), [
+            'id',
+            'total',
+            'status',
+            'payment_status',
+            'delivery_type',
+            'created_at'
+        ]) ? $request->query('sort_by') : 'id';
+
+        $sortDir = $request->query('sort_dir') === 'asc' ? 'asc' : 'desc';
 
         $orders = Order::query()
             ->with('user')
@@ -47,7 +59,7 @@ class OrderController
             ->when($dateTo, function ($query) use ($dateTo) {
                 $query->whereDate('created_at', '<=', $dateTo);
             })
-            ->orderByDesc('id')
+            ->orderBy($sortBy, $sortDir)
             ->get();
 
         return view('admin.orders.index', compact('orders', 'dateFrom', 'dateTo', 'search'));
