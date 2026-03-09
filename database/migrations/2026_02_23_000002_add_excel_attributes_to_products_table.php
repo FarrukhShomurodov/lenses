@@ -12,9 +12,9 @@ return new class extends Migration {
             $table->string('article')->nullable();
             $table->string('model')->nullable();
             $table->string('coating')->nullable();
-            $table->decimal('index', 4, 2)->nullable();
-            $table->decimal('sph', 6, 2)->nullable();
-            $table->decimal('cyl', 6, 2)->nullable();
+            $table->decimal('index', 10, 2)->nullable();
+            $table->decimal('sph', 10, 2)->nullable();
+            $table->decimal('cyl', 10, 2)->nullable();
             $table->integer('axis')->nullable();
             $table->string('family')->nullable();
             $table->string('color')->nullable();

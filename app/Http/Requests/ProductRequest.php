@@ -30,7 +30,7 @@ class ProductRequest extends FormRequest
             'article' => 'nullable|string|max:255',
             'model' => 'nullable|string|max:255',
             'coating' => 'nullable|string|max:255',
-            'index' => 'nullable|numeric|min:0|max:99.99',
+            'index' => 'nullable|numeric',
             'family' => 'nullable|string|max:255',
             'color' => 'nullable|string|max:255',
             'option' => 'nullable|string|max:255',
