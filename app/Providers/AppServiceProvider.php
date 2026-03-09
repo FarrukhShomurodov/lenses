@@ -18,7 +18,7 @@ class AppServiceProvider extends ServiceProvider
     {
         View::composer('admin.partials.sidebar', function ($view) {
             if (Auth::check()) {
-                $newChatsCount = SupportChat::where('status', 'new')->count();
+                $newChatsCount = SupportChat::whereIn('status', ['new', 'open'])->count();
                 $view->with('newChatsCount', $newChatsCount);
             }
         });
