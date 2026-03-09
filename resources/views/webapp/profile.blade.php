@@ -96,23 +96,25 @@
 
             display: flex;
 
-            justify-content: space-between;
-
             align-items: center;
 
             margin-bottom: 6px;
 
             font-weight: 600;
 
+            gap: 8px;
+
         }
 
         .order-line-left {
+
+            flex: 1;
 
             display: flex;
 
             align-items: center;
 
-            gap: 6px;
+            gap: 8px;
 
         }
 
@@ -124,13 +126,19 @@
 
             justify-content: center;
 
-            width: 22px;
+            width: 28px;
 
-            height: 22px;
+            height: 28px;
 
-            transition: transform 0.3s ease;
+            border-radius: 50%;
+
+            background: #f3f4f6;
+
+            transition: transform 0.3s ease, background 0.3s ease;
 
             flex-shrink: 0;
+
+            margin-left: auto;
 
         }
 
@@ -157,6 +165,8 @@
         .order-card.open .order-chevron {
 
             transform: rotate(180deg);
+
+            background: #e5e7eb;
 
         }
 
@@ -288,15 +298,15 @@
 
                                 {{ __('webapp.order_number') }} {{ $order->id }}
 
-                                <span class="order-chevron"></span>
+                                <span class="order-status status-{{ $order->status }}">
+
+                                    {{ __('webapp.order_status_' . $order->status) }}
+
+                                </span>
 
                             </span>
 
-                            <span class="order-status status-{{ $order->status }}">
-
-                                {{ __('webapp.order_status_' . $order->status) }}
-
-                            </span>
+                            <span class="order-chevron"></span>
 
                         </div>
 
