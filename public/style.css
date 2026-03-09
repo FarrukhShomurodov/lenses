@@ -92,7 +92,7 @@ body, html, .wrapper {
 .single__photo {
     position: relative;
     height: 385px;
-    background: #ccc;
+    /* background: #ccc; */
 }
 /* .single__photo::before {
     content: '';
