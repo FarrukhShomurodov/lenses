@@ -132,7 +132,7 @@
 
             border-radius: 50%;
 
-            background: #f3f4f6;
+            /* background: #f3f4f6; */
 
             transition: transform 0.3s ease, background 0.3s ease;
 
@@ -166,7 +166,7 @@
 
             transform: rotate(180deg);
 
-            background: #e5e7eb;
+            /* background: #e5e7eb; */
 
         }
 
