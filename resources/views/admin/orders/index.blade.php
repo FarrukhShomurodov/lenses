@@ -5,6 +5,27 @@
 @endsection
 
 @section('content')
+    <style>
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .sortable:hover {
+            color: #3b82f6;
+        }
+        .sort-icon {
+            display: inline-block;
+            margin-left: 4px;
+            font-size: 12px;
+            opacity: 0.3;
+            transition: opacity 0.2s;
+        }
+        .sort-icon.active {
+            opacity: 1;
+        }
+    </style>
+
     <div class="flex justify-between items-center py-6">
         <h1 class="text-2xl font-semibold text-slate-800 dark:text-navy-50">Заказы</h1>
 
@@ -15,24 +36,26 @@
     </div>
 
     <div class="mb-6 bg-white dark:bg-navy-800 rounded-xl shadow-sm border border-slate-200 dark:border-navy-600 p-4">
-        <form method="GET" action="{{ route('orders.index') }}" class="grid sm:grid-cols-4 gap-4">
+        <form method="GET" action="{{ route('orders.index') }}" id="filter-form" class="grid sm:grid-cols-4 gap-4">
             <div>
-                <label class="block text-sm font-medium text-slate-700  mb-1">Поиск</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Поиск</label>
                 <input type="text" name="search" value="{{ $search ?? '' }}"
                        placeholder="ID, телефон, адрес, клиент"
-                       class="w-full rounded-lg border border-slate-300  bg-slate-50 dark:bg-navy-800 px-3 py-2 text-slate-800  text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
+                       class="w-full rounded-lg border border-slate-300 bg-slate-50 dark:bg-navy-800 px-3 py-2 text-slate-800 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700  mb-1">Дата от</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Дата от</label>
                 <input type="date" name="date_from" value="{{ $dateFrom }}"
-                       class="w-full rounded-lg border border-slate-300  bg-slate-50 dark:bg-navy-800 px-3 py-2 text-slate-800  text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
+                       class="w-full rounded-lg border border-slate-300 bg-slate-50 dark:bg-navy-800 px-3 py-2 text-slate-800 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700  mb-1">Дата до</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Дата до</label>
                 <input type="date" name="date_to" value="{{ $dateTo }}"
-                       class="w-full rounded-lg border border-slate-300  bg-slate-50 dark:bg-navy-800 px-3 py-2 text-slate-800  text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
+                       class="w-full rounded-lg border border-slate-300 bg-slate-50 dark:bg-navy-800 px-3 py-2 text-slate-800 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
             </div>
             <div class="flex items-end gap-2">
+                <input type="hidden" name="sort_by" id="sort_by" value="{{ request('sort_by', 'id') }}">
+                <input type="hidden" name="sort_dir" id="sort_dir" value="{{ request('sort_dir', 'desc') }}">
                 <button type="submit"
                         class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition">
                     Фильтровать
@@ -77,22 +100,57 @@
         </div>
     </div>
 
+    @php
+        $currentSort = request('sort_by', 'id');
+        $currentDir  = request('sort_dir', 'desc');
+    @endphp
+
     <!-- 🧾 Таблица -->
     <div
         class="overflow-hidden rounded-xl border border-slate-200 dark:border-navy-600 shadow-sm bg-white dark:bg-navy-800">
         <table class="min-w-full divide-y divide-slate-200 dark:divide-navy-600 text-sm">
             <thead class="bg-slate-100 dark:bg-navy-700">
             <tr class="text-left">
-                <th class="px-3 py-2">ID</th>
+                <th class="px-3 py-2 sortable" data-sort="id">
+                    ID
+                    <span class="sort-icon {{ $currentSort === 'id' ? 'active' : '' }}">
+                        {{ $currentSort === 'id' ? ($currentDir === 'asc' ? '▲' : '▼') : '▲▼' }}
+                    </span>
+                </th>
                 <th class="px-3 py-2">Пользователь</th>
                 <th class="px-3 py-2">Телефон доставки</th>
                 <th class="px-3 py-2">Адрес доставки</th>
-                <th class="px-3 py-2">Тип доставки</th>
-                <th class="px-3 py-2">Сумма</th>
+                <th class="px-3 py-2 sortable" data-sort="delivery_type">
+                    Тип доставки
+                    <span class="sort-icon {{ $currentSort === 'delivery_type' ? 'active' : '' }}">
+                        {{ $currentSort === 'delivery_type' ? ($currentDir === 'asc' ? '▲' : '▼') : '▲▼' }}
+                    </span>
+                </th>
+                <th class="px-3 py-2 sortable" data-sort="total">
+                    Сумма
+                    <span class="sort-icon {{ $currentSort === 'total' ? 'active' : '' }}">
+                        {{ $currentSort === 'total' ? ($currentDir === 'asc' ? '▲' : '▼') : '▲▼' }}
+                    </span>
+                </th>
                 <th class="px-3 py-2">Тип оплаты</th>
-                <th class="px-3 py-2">Статус оплаты</th>
-                <th class="px-3 py-2">Статус заказа</th>
-                <th class="px-3 py-2">Создан</th>
+                <th class="px-3 py-2 sortable" data-sort="payment_status">
+                    Статус оплаты
+                    <span class="sort-icon {{ $currentSort === 'payment_status' ? 'active' : '' }}">
+                        {{ $currentSort === 'payment_status' ? ($currentDir === 'asc' ? '▲' : '▼') : '▲▼' }}
+                    </span>
+                </th>
+                <th class="px-3 py-2 sortable" data-sort="status">
+                    Статус заказа
+                    <span class="sort-icon {{ $currentSort === 'status' ? 'active' : '' }}">
+                        {{ $currentSort === 'status' ? ($currentDir === 'asc' ? '▲' : '▼') : '▲▼' }}
+                    </span>
+                </th>
+                <th class="px-3 py-2 sortable" data-sort="created_at">
+                    Создан
+                    <span class="sort-icon {{ $currentSort === 'created_at' ? 'active' : '' }}">
+                        {{ $currentSort === 'created_at' ? ($currentDir === 'asc' ? '▲' : '▼') : '▲▼' }}
+                    </span>
+                </th>
                 <th class="px-3 py-2 text-center">Действия</th>
             </tr>
             </thead>
@@ -151,6 +209,26 @@
 
 
     <script>
+        // ─── Сортировка по клику на заголовок ───
+        document.querySelectorAll('.sortable').forEach(th => {
+            th.addEventListener('click', function () {
+                const sortBy  = this.dataset.sort;
+                const sortInput = document.getElementById('sort_by');
+                const dirInput  = document.getElementById('sort_dir');
+
+                // Если кликнули по тому же столбцу — меняем направление
+                if (sortInput.value === sortBy) {
+                    dirInput.value = dirInput.value === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortInput.value = sortBy;
+                    dirInput.value  = 'desc';
+                }
+
+                document.getElementById('filter-form').submit();
+            });
+        });
+
+        // ─── Смена статуса (существующий код) ───
         document.querySelectorAll('.status-select').forEach(select => {
             select.addEventListener('change', function () {
 
@@ -170,7 +248,6 @@
                     .then(data => {
                         if (!data.success) return;
 
-                        // Обновляем цвет бейджа
                         const colors = {
                             new: "bg-blue-100 text-blue-700",
                             in_process: "bg-amber-100 text-amber-700",
