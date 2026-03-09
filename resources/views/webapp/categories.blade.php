@@ -163,7 +163,7 @@
 
         <div class="header">
             <a href="{{ route('webapp.profile') }}" class="header__btn i-user" id="menu-profile_header"></a>
-            <img class="header__logo" src="/img/lininglogo.png" alt="logo">
+            {{-- <img class="header__logo" src="/img/lininglogo.png" alt="logo"> --}}
 
             <a href="{{ route('webapp.cart') }}" class="header__btn i-cart" id="cart-btn">
                 <span id="cart-badge" class="cart-badge" style="display:none">0</span>
