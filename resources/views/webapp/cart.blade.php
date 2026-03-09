@@ -210,7 +210,7 @@
 
     <div class="content is-cart">
         <div class="header">
-            <a href="{{ route('webapp') }}" class="header__btn i-back"></a>
+            <a href="{{ url()->previous() == url()->current() ? route('webapp') : url()->previous() }}" class="header__btn i-back"></a>
             <p class="title">{{ __('webapp.cart_title') }}</p>
         </div>
 

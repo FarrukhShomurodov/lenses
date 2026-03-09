@@ -131,7 +131,7 @@
     <div class="content">
     <div id="alert-box" class="alert-box"></div>
         <div class="header">
-            <a href="{{ route('webapp') }}" class="header__btn i-back"></a>
+            <a href="{{ url()->previous() == url()->current() ? route('webapp') : url()->previous() }}" class="header__btn i-back"></a>
             <p class="title">Все товары</p>
         </div>
 

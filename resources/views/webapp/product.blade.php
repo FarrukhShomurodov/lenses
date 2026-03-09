@@ -176,7 +176,7 @@
         <div class="single">
             <div class="single__photo">
                 <div class="header">
-                    <a href="{{ route('webapp') }}" class="header__btn i-back"></a>
+                    <a href="{{ url()->previous() == url()->current() ? route('webapp') : url()->previous() }}" class="header__btn i-back"></a>
                     <a href="#" class="header__btn i-favs" id="fav-btn" data-id="{{ $product->id }}"></a>
                 </div>
 
