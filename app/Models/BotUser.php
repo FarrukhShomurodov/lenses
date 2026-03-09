@@ -10,6 +10,7 @@ class BotUser extends Model
         'chat_id',
         'first_name',
         'second_name',
+        'company_name',
         'uname',
         'phone',
         'step',
@@ -20,5 +21,9 @@ class BotUser extends Model
     protected $attributes = [
         'lang' => null,
         'step' => 'start'
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
     ];
 }

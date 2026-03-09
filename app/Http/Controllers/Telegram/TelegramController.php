@@ -56,6 +56,12 @@ class TelegramController
         $update = $this->telegram->getWebhookUpdates();
         $this->telegram->commandsHandler(true);
 
+        // Handle callback_query (inline button presses from admin)
+        if ($update->has('callback_query')) {
+            $this->handleCallbackQuery($update->getCallbackQuery());
+            return;
+        }
+
         if (! $update->has('message')) {
             return;
         }
@@ -77,16 +83,15 @@ class TelegramController
                 'uname' => $username,
                 'step' => 'choose_lang',
                 'lang' => null,
-                'is_active' => true,
+                'is_active' => false,
             ]
         );
 
-        if (! $user->is_active) {
-            $this->telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => $this->t($user, 'bot.account_inactive', ['admin' => '@exampleAdmin']),
-            ]);
+        // Allow registration steps to proceed even for inactive users
+        $registrationSteps = ['choose_lang', 'ask_first_name', 'ask_second_name', 'ask_phone', 'ask_company'];
 
+        if (! $user->is_active && ! in_array($user->step, $registrationSteps)) {
+            $this->handleBlockedUser($chatId, $user);
             return;
         }
 
@@ -189,10 +194,14 @@ class TelegramController
 
             $user->update([
                 'phone' => $phone,
-                'step' => 'done',
+                'step' => 'ask_company',
             ]);
 
-            $this->sendMainMenu($chatId, $user);
+            $this->telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => $this->t($user, 'bot.enter_company'),
+                'reply_markup' => Keyboard::make(['remove_keyboard' => true]),
+            ]);
 
             return;
         }
@@ -212,10 +221,40 @@ class TelegramController
 
             $user->update([
                 'phone' => $clean,
-                'step' => 'done',
+                'step' => 'ask_company',
             ]);
 
-            $this->sendMainMenu($chatId, $user);
+            $this->telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => $this->t($user, 'bot.enter_company'),
+                'reply_markup' => Keyboard::make(['remove_keyboard' => true]),
+            ]);
+
+            return;
+        }
+
+        if ($user->step === 'ask_company') {
+
+            if (trim($text) === '') {
+                $this->telegram->sendMessage([
+                    'chat_id' => $chatId,
+                    'text' => $this->t($user, 'bot.enter_company'),
+                ]);
+
+                return;
+            }
+
+            $user->update([
+                'company_name' => $text,
+                'step' => 'pending_approval',
+            ]);
+
+            $this->telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => $this->t($user, 'bot.access_request_sent'),
+            ]);
+
+            $this->notifyAdminAccessRequest($user);
 
             return;
         }
@@ -587,6 +626,99 @@ class TelegramController
                 ],
             ]),
         ]);
+    }
+
+    private function handleBlockedUser($chatId, BotUser $user): void
+    {
+        // Waiting for admin approval after registration
+        if ($user->step === 'pending_approval') {
+            $this->telegram->sendMessage([
+                'chat_id' => $chatId,
+                'text' => $this->t($user, 'bot.access_request_already_sent'),
+            ]);
+            return;
+        }
+
+        // Default: account was blocked after registration — show info message
+        $this->telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => $this->t($user, 'bot.account_inactive', ['admin' => '@'.env('TELEGRAM_ADMIN_USERNAME', 'admin')]),
+        ]);
+    }
+
+    private function notifyAdminAccessRequest(BotUser $user): void
+    {
+        $adminChatId = env('TELEGRAM_ADMIN_CHAT_ID');
+        if (! $adminChatId) {
+            return;
+        }
+
+        $tgLink = $user->uname ? "@{$user->uname}" : "chat_id: {$user->chat_id}";
+
+        $text = "📋 *Запрос на доступ*\n\n"
+            . "👤 Имя: {$user->first_name}\n"
+            . "🏢 Фирма: {$user->company_name}\n"
+            . "📞 Телефон: {$user->phone}\n"
+            . "🔗 Telegram: {$tgLink}";
+
+        $this->telegram->sendMessage([
+            'chat_id' => $adminChatId,
+            'text' => $text,
+            'parse_mode' => 'Markdown',
+            'reply_markup' => json_encode([
+                'inline_keyboard' => [[
+                    [
+                        'text' => '✅ Разблокировать',
+                        'callback_data' => 'unblock_' . $user->id,
+                    ],
+                ]],
+            ]),
+        ]);
+    }
+
+    private function handleCallbackQuery($callbackQuery): void
+    {
+        $data = $callbackQuery->getData();
+        $adminChatId = $callbackQuery->getFrom()->getId();
+        $messageId = $callbackQuery->getMessage()->getMessageId();
+
+        if (str_starts_with($data, 'unblock_')) {
+            $userId = (int) substr($data, strlen('unblock_'));
+            $user = BotUser::find($userId);
+
+            if (! $user) {
+                $this->telegram->answerCallbackQuery([
+                    'callback_query_id' => $callbackQuery->getId(),
+                    'text' => '❌ Пользователь не найден.',
+                    'show_alert' => true,
+                ]);
+                return;
+            }
+
+            $user->update(['is_active' => true, 'step' => 'done']);
+
+            // Notify the user in Telegram
+            $this->telegram->sendMessage([
+                'chat_id' => $user->chat_id,
+                'text' => $this->t($user, 'bot.access_granted'),
+            ]);
+
+            $this->sendMainMenu($user->chat_id, $user);
+
+            // Edit admin's message to mark as done
+            $this->telegram->editMessageText([
+                'chat_id' => $adminChatId,
+                'message_id' => $messageId,
+                'text' => $callbackQuery->getMessage()->getText() . "\n\n✅ *Разблокирован*",
+                'parse_mode' => 'Markdown',
+                'reply_markup' => json_encode(['inline_keyboard' => []]),
+            ]);
+
+            $this->telegram->answerCallbackQuery([
+                'callback_query_id' => $callbackQuery->getId(),
+                'text' => "✅ Пользователь {$user->first_name} разблокирован.",
+            ]);
+        }
     }
 
     private function extractPhotoUrl($message): ?string

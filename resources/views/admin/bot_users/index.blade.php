@@ -160,6 +160,28 @@
 
 @section('scripts')
     <script>
+        function showToast(message, type = 'success') {
+            const colors = {
+                success: 'bg-emerald-500',
+                error: 'bg-red-500',
+            };
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 z-[10050] flex items-center ${colors[type]} text-white px-4 py-3 rounded-xl shadow-lg transition-opacity duration-300`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Показать уведомление после перезагрузки страницы
+        const toastMsg = sessionStorage.getItem('toast_message');
+        if (toastMsg) {
+            showToast(toastMsg);
+            sessionStorage.removeItem('toast_message');
+        }
+
         document.querySelectorAll('.toggle-user-btn').forEach(btn => {
             btn.addEventListener('click', function () {
 
@@ -178,17 +200,12 @@
                     .then(data => {
                         if (!data.success) return;
 
-                        if (data.is_active) {
-                            this.textContent = 'Заблокировать';
-                            this.classList.remove('bg-emerald-100', 'text-emerald-700');
-                            this.classList.add('bg-rose-100', 'text-rose-700');
-                        } else {
-                            this.textContent = 'Разблокировать';
-                            this.classList.remove('bg-rose-100', 'text-rose-700');
-                            this.classList.add('bg-emerald-100', 'text-emerald-700');
-                        }
+                        const message = data.is_active
+                            ? 'Аккаунт разблокирован!'
+                            : 'Аккаунт заблокирован!';
 
-                        location.reload(); // чтобы обновились бейджи статистики
+                        sessionStorage.setItem('toast_message', message);
+                        location.reload();
                     });
             });
         });

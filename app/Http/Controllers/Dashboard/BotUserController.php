@@ -6,6 +6,9 @@ use App\Models\BotUser;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Telegram\Bot\Api;
+use Telegram\Bot\Keyboard\Keyboard;
+use Throwable;
 
 class BotUserController
 {
@@ -29,9 +32,43 @@ class BotUserController
 
     public function toggleBlock(BotUser $user): JsonResponse
     {
-        $user->update([
-            'is_active' => ! $user->is_active,
-        ]);
+        $wasBlocked = ! $user->is_active;
+
+        $updateData = ['is_active' => ! $user->is_active];
+
+        // При разблокировке — ставим step = done, чтобы главное меню работало
+        if ($wasBlocked) {
+            $updateData['step'] = 'done';
+        }
+
+        $user->update($updateData);
+
+        // Отправить уведомление в Telegram при разблокировке
+        if ($wasBlocked && $user->is_active) {
+            try {
+                $telegram = new Api(env('TELEGRAM_BOT_TOKEN'));
+
+                app()->setLocale($user->lang ?? 'ru');
+
+                $menu = Keyboard::make([
+                    'keyboard' => [
+                        [['text' => __('bot.menu.orders')]],
+                        [['text' => __('bot.menu.profile')]],
+                        [['text' => __('bot.menu.manager')]],
+                        [['text' => __('bot.menu.shop')]],
+                    ],
+                    'resize_keyboard' => true,
+                ]);
+
+                $telegram->sendMessage([
+                    'chat_id' => $user->chat_id,
+                    'text' => __('bot.access_granted'),
+                    'reply_markup' => $menu,
+                ]);
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
 
         return response()->json([
             'success' => true,

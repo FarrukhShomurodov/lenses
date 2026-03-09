@@ -5,9 +5,20 @@ return [
     'choose_language' => 'Tilni tanlang:',
     'account_inactive' => '⛔ Sizning akkauntingiz faollashtirilmagan yoki bloklangan. Administratorga murojaat qiling: :admin',
 
+    'account_blocked_request' => "⛔ Sizning akkauntingiz bloklangan.\n\nKirish uchun so'rov yuborishingiz mumkin.",
+    'access_request_button' => '📝 Kirish so\'rash',
+    'access_request_enter_name' => 'To\'liq ismingizni kiriting:',
+    'access_request_enter_company' => 'Firma nomingizni kiriting:',
+    'access_request_enter_phone' => 'Telefon raqamingizni kiriting:',
+    'access_request_sent' => "✅ So'rovingiz administratorga yuborildi.\n\nTasdiqlashni kuting.",
+    'access_request_already_sent' => "⏳ So'rovingiz allaqachon yuborilgan.\n\nAdministrator javobini kuting.",
+    'access_granted' => '✅ Akkauntingiz blokdan chiqarildi! Xush kelibsiz.',
+
     'welcome' => 'Xush kelibsiz! Iltimos, ismingizni kiriting:',
     'language_selected' => 'Til muvaffaqiyatli tanlandi.',
     'enter_lastname' => 'Iltimos, familiyangizni kiriting:',
+
+    'enter_company' => 'Firma nomingizni kiriting:',
 
     'send_phone_button' => 'Telefon raqamni yuborish',
     'send_phone' => 'Iltimos, telefon raqamingizni yuboring:',
