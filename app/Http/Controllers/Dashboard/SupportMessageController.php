@@ -37,28 +37,40 @@ class SupportMessageController
 
     public function close(SupportChat $chat): RedirectResponse
     {
-    $chat->update(['status' => 'closed']);
+        $chat->update(['status' => 'closed']);
 
+        $botUser = $chat->user;
+        $botUser->update(['step' => 'done']);
+
+        $this->sendMainMenu($chat->user->chat_id, $botUser);
+
+        return redirect()->route('support.index');
+    }
+
+    private function sendMainMenu($chatId, $user)
+    {
         $menu = Keyboard::make([
             'keyboard' => [
-                [['text' => '🧾 Все заказы']],
-                [['text' => '⚙ Настройки профиля']],
-                [['text' => '💬 Связаться с менеджером']],
-                [['text' => '🛍 Открыть магазин']],
+                [['text' => $this->t($user, 'bot.menu.orders')]],
+                [['text' => $this->t($user, 'bot.menu.profile')]],
+                [['text' => $this->t($user, 'bot.menu.manager')]],
+                [['text' => $this->t($user, 'bot.menu.shop')]],
             ],
             'resize_keyboard' => true,
         ]);
 
         $tg = new Api(env('TELEGRAM_BOT_TOKEN'));
         $tg->sendMessage([
-            'chat_id' => $chat->user->chat_id,
-            'text' => 'Так как от вас не поступило ответа, мы вынуждены завершить диалог. Чтобы вновь начать переписку с оператором, нажмите «Связаться с менеджером».',
+            'chat_id' => $chatId,
+            'text' => $this->t($user, 'bot.thanks', ['name' => $user->first_name]),
             'reply_markup' => $menu,
         ]);
+    }
 
-        $botUser = $chat->user;
-        $botUser->update(['step' => 'done']);
+    private function t($user, $key, $replace = [])
+    {
+        app()->setLocale($user->lang ?? 'ru');
 
-        return redirect()->route('support.index');
+        return __($key, $replace);
     }
 }
