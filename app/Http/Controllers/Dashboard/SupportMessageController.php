@@ -37,7 +37,7 @@ class SupportMessageController
 
     public function close(SupportChat $chat): RedirectResponse
     {
-        $chat->update(['status' => 'closed']);
+    $chat->update(['status' => 'closed']);
 
         $menu = Keyboard::make([
             'keyboard' => [
@@ -55,6 +55,9 @@ class SupportMessageController
             'text' => 'Так как от вас не поступило ответа, мы вынуждены завершить диалог. Чтобы вновь начать переписку с оператором, нажмите «Связаться с менеджером».',
             'reply_markup' => $menu,
         ]);
+
+        $botUser = $chat->user;
+        $botUser->update(['step' => 'done']);
 
         return redirect()->route('support.index');
     }
