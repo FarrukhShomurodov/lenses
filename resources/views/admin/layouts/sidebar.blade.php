@@ -12,12 +12,19 @@
 
             <div class="w-full mt-4 px-4">
                 <a href="{{ route('support.index') }}"
-                   class="flex items-center space-x-3 p-2 rounded-md font-semibold
-                          {{ request()->routeIs('support.index') ? 'bg-blue-50 text-blue-600 dark:bg-navy-600' : 'text-gray-800 dark:text-navy-100 hover:bg-gray-100 dark:hover:bg-navy-700' }}">
+                    class="flex items-center space-x-3 p-2 rounded-md font-semibold
+                        {{ request()->routeIs('support.index') ? 'bg-blue-50 text-blue-600 dark:bg-navy-600' : 'text-gray-800 dark:text-navy-100 hover:bg-gray-100 dark:hover:bg-navy-700' }}">
                     <i class="fas fa-headset"></i>
                     <span>Поддержка</span>
+                    
+                    @if(($newChatsCount ?? 0) > 0)
+                        <span class="ml-auto inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold">
+                            {{ $newChatsCount > 99 ? '99+' : $newChatsCount }}
+                        </span>
+                    @endif
                 </a>
             </div>
+            
 
             <div class="w-full flex-1 px-4 mt-4 space-y-2">
 
