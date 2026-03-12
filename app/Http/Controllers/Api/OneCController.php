@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\Order;
 use App\Services\OneCService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class OneCController
 {
@@ -13,7 +13,8 @@ class OneCController
     ) {}
 
     /**
-     * Получение данных о товаре по артикулу для 1С
+     * GET /api/1c/product/{article}
+     * 1С запрашивает данные о товаре
      */
     public function product(string $article): JsonResponse
     {
@@ -34,40 +35,34 @@ class OneCController
     }
 
     /**
-     * Отправка заказа в 1С
+     * POST /api/1c/sale
+     * 1С сообщает о продаже — создаём заказ + списываем остаток
      */
-    public function sendOrder(int $orderId): JsonResponse
+    public function sale(Request $request): JsonResponse
     {
-        $order = Order::with(['items.product', 'user'])->find($orderId);
+        $validated = $request->validate([
+            'items' => 'required|array|min:1',
+            'items.*.article' => 'required|string',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.price' => 'required|numeric|min:0',
+            'customer_phone' => 'nullable|string',
+            'customer_name' => 'nullable|string',
+            'comment' => 'nullable|string',
+            '1c_order_id' => 'nullable|string',
+        ]);
 
-        if (!$order) {
-            return response()->json([
-                'success' => false,
-                'error' => 'order_not_found',
-                'message' => "Заказ #{$orderId} не найден",
-            ], 404);
-        }
-
-        if ($order->items->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'error' => 'empty_order',
-                'message' => "Заказ #{$orderId} не содержит позиций",
-            ], 422);
-        }
-
-        $result = $this->service->sendOrder($order);
+        $result = $this->service->processSale($validated);
 
         if (!$result['success']) {
             $status = match ($result['error'] ?? '') {
-                '1c_connection_error' => 503,
-                '1c_error' => $result['status_code'] ?? 502,
+                'product_not_found' => 404,
+                'insufficient_stock' => 422,
                 default => 500,
             };
 
             return response()->json($result, $status);
         }
 
-        return response()->json($result);
+        return response()->json($result, 201);
     }
 }

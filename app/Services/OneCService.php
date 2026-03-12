@@ -3,19 +3,14 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
-use Illuminate\Support\Facades\Http;
+use App\Models\StockHistory;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OneCService
 {
-    private string $baseUrl;
-
-    public function __construct()
-    {
-        $this->baseUrl = rtrim(config('services.one_c.base_url', ''), '/');
-    }
-
     /**
      * Получить данные товара по артикулу
      */
@@ -59,116 +54,104 @@ class OneCService
     }
 
     /**
-     * Отправить заказ в 1С после оплаты
+     * Обработать продажу от 1С: создать Order + списать остатки
      */
-    public function sendOrder(Order $order): array
+    public function processSale(array $data): array
     {
-        $order->load(['items.product', 'user']);
+        $products = [];
+        foreach ($data['items'] as $item) {
+            $product = Product::with('stock')->where('article', $item['article'])->first();
 
-        $payload = $this->buildOrderPayload($order);
+            if (!$product) {
+                return [
+                    'success' => false,
+                    'error' => 'product_not_found',
+                    'message' => "Товар с артикулом '{$item['article']}' не найден",
+                ];
+            }
+
+            $stockQty = $product->stock?->quantity ?? 0;
+            if ($stockQty < $item['quantity']) {
+                return [
+                    'success' => false,
+                    'error' => 'insufficient_stock',
+                    'message' => "Недостаточно остатка для '{$item['article']}': доступно {$stockQty}, запрошено {$item['quantity']}",
+                ];
+            }
+
+            $products[] = [
+                'product' => $product,
+                'quantity' => $item['quantity'],
+                'price' => $item['price'],
+            ];
+        }
 
         try {
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-            ])
-                ->timeout(30)
-                ->post("{$this->baseUrl}/orders", $payload);
+            return DB::transaction(function () use ($data, $products) {
+                $total = collect($products)->sum(fn($p) => $p['price'] * $p['quantity']);
 
-            if ($response->successful()) {
-                $body = $response->json();
+                $order = Order::create([
+                    'user_id' => null,
+                    'total' => $total,
+                    'status' => Order::STATUS_DONE,
+                    'payment_type' => 'cash',
+                    'payment_status' => Order::PAYMENT_PAID,
+                    'delivery_type' => null,
+                    'delivery_address' => $data['comment'] ?? null,
+                    'delivery_phone' => $data['customer_phone'] ?? null,
+                ]);
 
-                Log::info('1C: Заказ успешно отправлен', [
+                foreach ($products as $item) {
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'product_id' => $item['product']->id,
+                        'price' => $item['price'],
+                        'quantity' => $item['quantity'],
+                    ]);
+
+                    $stock = $item['product']->stock;
+                    $previousQty = $stock->quantity;
+                    $stock->decrement('quantity', $item['quantity']);
+
+                    StockHistory::create([
+                        'stock_id' => $stock->id,
+                        'type' => 'minus',
+                        'quantity' => $stock->quantity,
+                        'previous_quantity' => $previousQty,
+                        'difference' => $item['quantity'],
+                        'order_id' => $order->id,
+                        'source' => '1c',
+                    ]);
+                }
+
+                Log::info('1C: Продажа обработана', [
                     'order_id' => $order->id,
-                    '1c_order_id' => $body['order_id'] ?? null,
+                    '1c_order_id' => $data['1c_order_id'] ?? null,
+                    'items_count' => count($products),
+                    'total' => $total,
                 ]);
 
                 return [
                     'success' => true,
-                    'message' => 'Заказ успешно передан в 1С',
+                    'message' => 'Продажа обработана, заказ создан',
                     'data' => [
                         'order_id' => $order->id,
-                        '1c_order_id' => $body['order_id'] ?? null,
-                        '1c_response' => $body,
+                        'total' => $total,
+                        'items_count' => count($products),
                     ],
                 ];
-            }
-
-            Log::error('1C: Ошибка при отправке заказа', [
-                'order_id' => $order->id,
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-
-            return [
-                'success' => false,
-                'error' => '1c_error',
-                'message' => '1С вернул ошибку: ' . $response->status(),
-                'status_code' => $response->status(),
-                'details' => $response->json() ?? $response->body(),
-            ];
+            });
         } catch (\Exception $e) {
-            Log::error('1C: Не удалось подключиться', [
-                'order_id' => $order->id,
+            Log::error('1C: Ошибка при обработке продажи', [
                 'error' => $e->getMessage(),
+                'data' => $data,
             ]);
 
             return [
                 'success' => false,
-                'error' => '1c_connection_error',
-                'message' => 'Не удалось подключиться к 1С: ' . $e->getMessage(),
+                'error' => 'processing_error',
+                'message' => 'Ошибка при обработке продажи: ' . $e->getMessage(),
             ];
         }
-    }
-
-    /**
-     * Собрать payload заказа для 1С
-     */
-    private function buildOrderPayload(Order $order): array
-    {
-        $items = $order->items->map(function ($item) {
-            $data = [
-                'product_id' => $item->product_id,
-                'article' => $item->product?->article,
-                'name' => $item->product?->name,
-                'quantity' => $item->quantity,
-                'price' => (float) $item->price,
-                'total' => (float) ($item->price * $item->quantity),
-            ];
-
-            // Rx-данные для рецептурных линз
-            if ($item->rx_sph || $item->rx_cyl || $item->rx_axis || $item->rx_add || $item->rx_prism) {
-                $data['rx'] = [
-                    'sph' => $item->rx_sph,
-                    'cyl' => $item->rx_cyl,
-                    'axis' => $item->rx_axis,
-                    'add' => $item->rx_add,
-                    'prism' => $item->rx_prism,
-                ];
-            }
-
-            return $data;
-        })->toArray();
-
-        return [
-            'order_id' => $order->id,
-            'created_at' => $order->created_at?->toIso8601String(),
-            'customer' => [
-                'user_id' => $order->user_id,
-                'name' => $order->user?->name ?? $order->user?->first_name,
-                'phone' => $order->delivery_phone ?? $order->user?->phone,
-            ],
-            'payment' => [
-                'type' => $order->payment_type,
-                'status' => $order->payment_status,
-                'total' => (float) $order->total,
-            ],
-            'delivery' => [
-                'type' => $order->delivery_type,
-                'address' => $order->delivery_address,
-                'phone' => $order->delivery_phone,
-            ],
-            'items' => $items,
-        ];
     }
 }
