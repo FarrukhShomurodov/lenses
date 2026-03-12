@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\OneCApiToken;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\TelegramWebAppAuth;
 use Illuminate\Foundation\Application;
@@ -37,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'role' => RoleMiddleware::class,
+            '1c.token' => OneCApiToken::class,
         ]);
 
         $middleware->web([

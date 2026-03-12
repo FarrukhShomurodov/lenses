@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'one_c' => [
+        'base_url' => env('ONE_C_BASE_URL', 'http://localhost:8080/api/v1'),
+        // 'api_token' => env('ONE_C_API_TOKEN'), // TODO: включить когда будет авторизация
+    ],
+
 ];
