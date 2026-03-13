@@ -48,5 +48,5 @@ Route::post('paycom', [PaycomController::class, 'handleRequest']);
 // 1C integration
 Route::prefix('1c')->group(function () {
     Route::get('product/{article}', [OneCController::class, 'product']);
-    Route::post('order/{orderId}/send', [OneCController::class, 'sendOrder']);
+    Route::post('sale', [OneCController::class, 'sale']);
 });
