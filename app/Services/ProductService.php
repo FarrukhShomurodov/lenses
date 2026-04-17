@@ -44,6 +44,8 @@ class ProductService
             $product->update($validated);
 
             if (! empty($validated['photos'])) {
+                // replace existing photos: delete old files + records first
+                $this->deleteOldPhotos($product);
                 $this->syncPhotos($product, $validated['photos']);
             }
 
