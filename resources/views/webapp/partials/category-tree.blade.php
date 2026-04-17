@@ -20,7 +20,7 @@
                             class="category-tree__toggle"
                             aria-expanded="false"
                             aria-label="Показать подкатегории">
-                        <span class="category-tree__chevron">›</span>
+                        <span class="category-tree__chevron"></span>
                     </button>
                 @endif
             </div>

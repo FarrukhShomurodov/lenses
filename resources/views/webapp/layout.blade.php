@@ -8,7 +8,7 @@
 
     <title>{{ $title ?? 'lenses' }}</title>
 
-    <link rel="stylesheet" href="{{ asset('style.css') }}?v=modern-8">
+    <link rel="stylesheet" href="{{ asset('style.css') }}?v=modern-9">
     <script src="https://telegram.org/js/telegram-web-app.js?1"></script>
 
     <meta name="theme-color" content="#f1f3f7">

@@ -361,23 +361,40 @@ img {
     height: 44px;
     border-radius: 14px;
     background: var(--surface);
-    border: none;
+    border: 1px solid rgba(228, 233, 242, 0.8);
     box-shadow: var(--shadow-sm);
     color: var(--text-muted);
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s var(--ease-out), border-color 0.2s, transform 0.12s;
+}
+.category-tree__toggle:active {
+    transform: scale(0.94);
+}
+.category-tree__toggle[aria-expanded="true"] {
+    background: var(--primary-soft);
+    border-color: rgba(36, 129, 204, 0.25);
 }
 .category-tree__chevron {
     display: inline-block;
-    transform: rotate(90deg);
-    font-size: 20px;
-    line-height: 1;
-    transition: transform 0.2s ease;
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform 0.28s var(--ease-out), margin 0.28s var(--ease-out);
     color: var(--text-muted);
+    font-size: 0;
+    line-height: 0;
+    margin-top: -3px;
+    border-bottom-right-radius: 2px;
 }
 .category-tree__toggle[aria-expanded="true"] .category-tree__chevron {
-    transform: rotate(-90deg);
+    transform: rotate(-135deg);
+    margin-top: 3px;
+    color: var(--primary);
 }
 .category-tree__children {
     margin-top: 8px;
