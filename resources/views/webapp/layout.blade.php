@@ -8,152 +8,10 @@
 
     <title>{{ $title ?? 'lenses' }}</title>
 
-    <link rel="stylesheet" href="{{ asset('style.css') }}">
+    <link rel="stylesheet" href="{{ asset('style.css') }}?v=modern-8">
     <script src="https://telegram.org/js/telegram-web-app.js?1"></script>
 
-    <style>
-        @font-face {
-            font-family: "Gotham";
-            src: url("/fonts/gotham/gotham_book.otf") format("opentype");
-            font-weight: 400;
-            font-style: normal;
-            font-display: swap;
-        }
-
-        @font-face {
-            font-family: "Gotham";
-            src: url("/fonts/gotham/gotham_bookitalic.otf") format("opentype");
-            font-weight: 400;
-            font-style: italic;
-            font-display: swap;
-        }
-
-        @font-face {
-            font-family: "Gotham";
-            src: url("/fonts/gotham/gotham_medium.otf") format("opentype");
-            font-weight: 500;
-            font-style: normal;
-            font-display: swap;
-        }
-
-        @font-face {
-            font-family: "Gotham";
-            src: url("/fonts/gotham/gotham_mediumitalic.otf") format("opentype");
-            font-weight: 500;
-            font-style: italic;
-            font-display: swap;
-        }
-
-        @font-face {
-            font-family: "Gotham";
-            src: url("/fonts/gotham/gotham_bold.otf") format("opentype");
-            font-weight: 700;
-            font-style: normal;
-            font-display: swap;
-        }
-
-        @font-face {
-            font-family: "Gotham";
-            src: url("/fonts/gotham/gotham_bolditalic.otf") format("opentype");
-            font-weight: 700;
-            font-style: italic;
-            font-display: swap;
-        }
-
-        /* убрать скругления у всех элементов */
-        * {
-            border-radius: 0 !important;
-        }
-
-        body, .wrapper, .content {
-            max-width: 100%;
-            margin: 0;
-            width: 100%;
-            box-sizing: border-box;
-            font-family: "Gotham", sans-serif;
-        }
-
-        .product__meta {
-            padding-top: 10px;
-            padding-bottom: 10px;
-        }
-
-        ::selection {
-            background: #741C28;
-            color: #fff;
-        }
-
-        .alert-box {
-            position: fixed;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #741C28;
-            color: #fff;
-            padding: 10px 16px;
-            border-radius: 6px;
-            font-size: 14px;
-            display: none;
-            z-index: 9999;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .alert-box.show {
-            display: block;
-            opacity: 1;
-        }
-
-        .cart-badge {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            background: #ff3b30;
-            color: #fff;
-            font-size: 11px;
-            padding: 2px 5px;
-            border-radius: 10px;
-            min-width: 18px;
-            text-align: center;
-            line-height: 14px;
-            font-weight: bold;
-            transform: scale(1);
-            transition: 0.25s ease;
-        }
-
-        .cart-badge.bump {
-            transform: scale(1.3);
-        }
-
-        .i-favs.active {
-            background-image: url('/img/icon-favs-active.svg') !important;
-        }
-
-        .badge-container {
-            position: relative;
-        }
-
-        #bottom-cart-badge {
-            position: absolute;
-            top: 17px;
-            right: 14px;
-            background: #fff;
-            color: #ff3b30;
-            transform: scale(0.9);
-        }
-         .header__logo{
-            max-width: 120px;
-        }
-
-        .slider__btn {
-            font-size: 20px;
-        }
-
-        .category-tree__chevron {
-           
-            font-size: 22px;
-        }
-    </style>
+    <meta name="theme-color" content="#f1f3f7">
 
     @yield('head')
 </head>
@@ -217,33 +75,114 @@
 </script>
 
 <script>
-    fetch('/api/webapp/check-user')
-        .then(r => r.json())
-        .then(res => {
-            if (!res.active) {
-                document.body.innerHTML = `
-                <div style="
-                    height:100vh;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    background:#0f172a;
-                    color:white;
-                    font-family:system-ui;
-                    text-align:center;">
-                    <div>
-                        <h2>{{ __('webapp.access_denied_title') }}</h2>
-                        <p>{{ __('webapp.access_denied_text') }} @exampleAdmin</p>
-                        <button onclick="Telegram.WebApp.close()"
-                            style="padding:12px 18px;background:#ef4444;
-                            border:none;border-radius:10px;color:white;">
-                            {{ __('webapp.close') }}
-                </button>
-            </div>
-        </div>
-`;
-            }
-        });
+    (function () {
+        const L = {
+            formTitle: @json(__('webapp.access_form_title')),
+            formSubtitle: @json(__('webapp.access_form_subtitle')),
+            formCompany: @json(__('webapp.access_form_company')),
+            formSubmit: @json(__('webapp.access_form_submit')),
+            formError: @json(__('webapp.access_form_error')),
+            pendingTitle: @json(__('webapp.access_pending_title')),
+            pendingText: @json(__('webapp.access_pending_text')),
+            close: @json(__('webapp.close')),
+        };
+
+        const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g,
+            c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+        function renderPending() {
+            document.body.innerHTML = `
+                <div class="access-overlay">
+                    <div class="access-card">
+                        <div class="access-card__icon">⏳</div>
+                        <h2 class="access-card__title">${escapeHtml(L.pendingTitle)}</h2>
+                        <p class="access-card__subtitle">${escapeHtml(L.pendingText)}</p>
+                        <button type="button" class="access-form__submit" id="access-close-btn">
+                            ${escapeHtml(L.close)}
+                        </button>
+                    </div>
+                </div>`;
+            document.getElementById('access-close-btn')
+                ?.addEventListener('click', () => window.Telegram?.WebApp?.close?.());
+        }
+
+        function renderForm(prefill) {
+            const company = escapeHtml(prefill?.company_name ?? '');
+            document.body.innerHTML = `
+                <div class="access-overlay">
+                    <div class="access-card">
+                        <div class="access-card__icon">🔒</div>
+                        <h2 class="access-card__title">${escapeHtml(L.formTitle)}</h2>
+                        <p class="access-card__subtitle">${escapeHtml(L.formSubtitle)}</p>
+                        <form class="access-form" id="access-form">
+                            <label class="access-form__field">
+                                <span>${escapeHtml(L.formCompany)}</span>
+                                <input type="text" name="company_name" value="${company}" required autocomplete="organization" maxlength="255">
+                            </label>
+                            <div class="access-form__error" id="access-form-error"></div>
+                            <button type="submit" class="access-form__submit" id="access-form-submit">
+                                ${escapeHtml(L.formSubmit)}
+                            </button>
+                        </form>
+                    </div>
+                </div>`;
+
+            const form = document.getElementById('access-form');
+            const submitBtn = document.getElementById('access-form-submit');
+            const errorBox = document.getElementById('access-form-error');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const companyName = form.company_name.value.trim();
+                if (!companyName) return;
+
+                errorBox.textContent = '';
+                submitBtn.disabled = true;
+
+                const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+
+                try {
+                    const resp = await fetch('/api/webapp/access-request', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            chat_id: userId,
+                            company_name: companyName,
+                            first_name: tgUser.first_name || prefill?.first_name || null,
+                            uname: tgUser.username || null,
+                            phone: prefill?.phone || null,
+                        }),
+                    });
+                    const data = await resp.json();
+                    if (data.success) {
+                        window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success');
+                        renderPending();
+                    } else {
+                        errorBox.textContent = L.formError;
+                        submitBtn.disabled = false;
+                    }
+                } catch (err) {
+                    errorBox.textContent = L.formError;
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+
+        fetch('/api/webapp/check-user')
+            .then(r => r.json())
+            .then(res => {
+                if (res.status === 'active' || res.active === true) return;
+                if (res.status === 'pending') {
+                    renderPending();
+                    return;
+                }
+                renderForm(res.prefill || {});
+            })
+            .catch(() => {});
+    })();
 </script>
 
 @yield('scripts')

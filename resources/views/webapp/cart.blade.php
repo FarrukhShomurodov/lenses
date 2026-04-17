@@ -3,187 +3,6 @@
 @section('title', __('webapp.cart_title'))
 
 @section('head')
-    <style>
-        .payment__btn:disabled {
-            opacity: 0.5;
-            pointer-events: none;
-            background: #ccc;
-        }
-
-        .product-card__badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 2px 6px;
-            border-radius: 6px;
-            background: #d70000;
-            color: #fff;
-            font-size: 11px;
-            font-weight: 700;
-            margin-top: 4px;
-        }
-
-        .product-card__title {
-            color: #124ea5;
-        }
-
-        .product-card__title:hover {
-            text-decoration: underline;
-        }
-
-        .product-card__image {
-            cursor: pointer;
-        }
-
-        .product-card__type {
-            color: #2a0000;
-        }
-
-        .custom-checkbox input[type="radio"]:checked+span {
-            background: #124ea5 !important;
-            border-color: #124ea5 !important;
-        }
-
-        .custom-checkbox input[type="radio"]:checked+span:before {
-            border-color: #124ea5 !important;
-        }
-
-        .custom-checkbox input[type="radio"]:checked+span+p {
-            color: #124ea5 !important;
-        }
-
-        .payment__row--muted {
-            color: #8c8c8c;
-        }
-
-        .payment__row--discount {
-            color: #124ea5;
-            font-weight: 600;
-        }
-
-        .payment__row {
-            margin: 4px 0;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .payment__row .subtotal-price,
-        .payment__row .discount-price,
-        .payment__row .total-price {
-            margin-left: auto;
-            text-align: right;
-        }
-
-        .payment__row--total {
-            font-weight: 700;
-        }
-
-        .order-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.55);
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            z-index: 9999;
-            padding: 12px;
-        }
-
-        .order-modal__body {
-            background: #fff;
-            width: 100%;
-            max-width: 420px;
-            border-radius: 20px;
-            padding: 18px 16px 20px;
-            animation: modalUp .25s ease-out;
-            position: relative;
-        }
-
-        @keyframes modalUp {
-            from {
-                transform: translateY(100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .order-modal__body h3 {
-            margin: 10px 0 6px;
-            font-size: 15px;
-            font-weight: 600;
-            color: #222;
-        }
-
-        .order-modal__close {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 28px;
-            height: 28px;
-            border: none;
-            border-radius: 8px;
-            background: #000;
-            color: #fff;
-            font-size: 18px;
-            line-height: 1;
-            cursor: pointer;
-        }
-
-        .order-modal__body input,
-        .order-modal__body select {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 12px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-            margin-bottom: 10px;
-            outline: none;
-        }
-
-        .order-modal__body input:focus,
-        .order-modal__body select:focus {
-            border-color: #741C28;
-        }
-
-        #delivery-fields {
-            margin-top: 8px;
-        }
-
-        #confirm-order {
-            width: 100%;
-            margin-top: 14px;
-            padding: 14px;
-            border-radius: 14px;
-            border: none;
-            background: #000;
-            color: #fff;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: .2s;
-        }
-
-        .payment__btn,
-        .product-card__plus,
-        .product-card__minus,
-        .product-card__del {
-            background-color: #000 !important;
-            color: #fff !important;
-        }
-
-        .products {
-            padding-bottom: 60px;
-        }
-
-        #confirm-order:active {
-            transform: scale(.97);
-            opacity: .9;
-        }
-    </style>
 @endsection
 
 @section('content')
@@ -287,7 +106,7 @@
         </div>
 
         <div class="payment__row payment__row--total">
-            <p class="payment__label">Итого:</p>
+            <p class="payment__label">К оплате:</p>
             <p class="payment__label total-price">
                 {{ number_format($pricing['total'], 0, '.', ' ') }}
             </p>
@@ -316,6 +135,8 @@
             {{ $cart->items->count() === 0 ? __('webapp.cart_empty') : __('webapp.pay') }}
         </button>
     </div>
+
+    @include('webapp.partials.bottom-nav', ['navActive' => 'cart'])
 @endsection
 
 <script src="https://code.jquery.com/jquery-3.7.1.slim.js"

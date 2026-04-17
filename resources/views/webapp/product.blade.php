@@ -1,172 +1,6 @@
 @extends('webapp.layout')
 
 @section('head')
-    <style>
-        .qty-controls {
-            display: none;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .qty-controls span {
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .single__photo {
-            position: relative;
-        }
-
-        .single__photo-wave {
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            line-height: 0;
-            height: 70px;
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        .single__photo-wave svg {
-            display: block;
-            width: 100%;
-            height: 69px;
-        }
-
-        .product__discount {
-            background: #d70000;
-            color: #fff;
-            font-size: 12px;
-            font-weight: 700;
-            padding: 4px 10px;
-            line-height: 1;
-            border-radius: 6px;
-        }
-
-        .single__row {
-            position: relative;
-        }
-
-        .product__discount-badge {
-            position: absolute;
-            right: 0;
-            top: -25px;
-            z-index: 3;
-        }
-
-        .single__button,
-        .product-card__plus,
-        .product-card__minus {
-            background-color: #000 !important;
-            color: #fff !important;
-        }
-
-        .product__price {
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .product__price-old {
-            font-size: 14px;
-            color: #999;
-            text-decoration: line-through;
-            margin-left: 8px;
-        }
-
-        .product__meta-list {
-            margin-top: 10px;
-            font-size: 14px;
-            color: #444;
-        }
-
-        .product__meta-list div {
-            margin-top: 4px;
-        }
-
-        .product-slider {
-            position: relative;
-            overflow: hidden;
-            border-radius: 12px;
-            z-index: 1;
-            margin-top: -110px;
-            margin-bottom: 0;
-        }
-
-        .single__info {
-            margin-top: 0;
-            padding-top: 24px;
-            background: #fff;
-            position: relative;
-            z-index: 2;
-        }
-
-        .single__title {
-            font-size: 16px;
-            line-height: 1.2;
-        }
-
-        .product-slider__track {
-            display: flex;
-            transition: transform 0.4s ease;
-            will-change: transform;
-        }
-
-        .product-slider__slide {
-            min-width: 100%;
-            position: relative;
-        }
-
-        .product-slider__slide img {
-            position: static;
-            width: 100%;
-            display: block;
-            border-radius: 12px;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .product-slider__dots {
-            display: flex;
-            justify-content: center;
-            gap: 6px;
-            margin-top: 8px;
-        }
-
-        .product-slider__dot {
-            width: 6px;
-            height: 6px;
-            background: #111;
-            opacity: 0.3;
-            cursor: pointer;
-        }
-
-        .product-slider__dot.active {
-            opacity: 1;
-        }
-
-        .product-slider__btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 32px;
-            height: 32px;
-            border: none;
-            background: #000;
-            color: #fff;
-            opacity: 0.75;
-            cursor: pointer;
-            z-index: 2;
-        }
-
-        .product-slider__btn--prev {
-            left: 6px;
-        }
-
-        .product-slider__btn--next {
-            right: 6px;
-        }
-    </style>
 @endsection
 
 @section('content')
@@ -200,6 +34,22 @@
                     }
 
                     $attributesGrouped = $product->attributes->groupBy('name');
+
+                    // Static product fields → label map (skip empties)
+                    $specPairs = collect([
+                        'Артикул'       => $product->article,
+                        'Производитель' => $product->manufacturer,
+                        'Модель'        => $product->model,
+                        'Семейство'     => $product->family,
+                        'Покрытие'      => $product->coating,
+                        'Индекс'        => $product->index,
+                        'SPH'           => $product->sph,
+                        'CYL'           => $product->cyl,
+                        'AXIS'          => $product->axis,
+                        'Цвет'          => $product->color,
+                        'Опция'         => $product->option,
+                    ])->filter(fn ($v) => $v !== null && $v !== '');
+
                 @endphp
 
                 @if ($product->images->count())
@@ -223,91 +73,89 @@
                     </div>
                 @endif
 
-                <div class="single__photo-wave" aria-hidden="true">
-                    <svg viewBox="0 0 1440 100" preserveAspectRatio="none">
-                        <path fill="#FFFFFF" d="M0,60 C240,100 480,20 720,60 C960,100 1200,20 1440,60 L1440,100 L0,100 Z">
-                        </path>
-                    </svg>
-                </div>
+                @if ($discountBadge)
+                    <span class="product__discount single__photo-badge">{{ $discountBadge }}</span>
+                @endif
+
             </div>
 
             <div class="single__info">
-                <div class="single__row">
-                    <h1 class="single__title">{{ $product->localized_name }}</h1>
+                @if ($product->category)
+                    <span class="single__chip">
+                        {{ $product->category->localized_name ?? $product->category->name }}
+                    </span>
+                @endif
 
-                    @if ($discountBadge)
-                        <span class="product__discount product__discount-badge">{{ $discountBadge }}</span>
+                <h1 class="single__title">{{ $product->localized_name }}</h1>
+
+                <div class="single__price-row">
+                    <div class="single__price-block">
+                        <span class="single__price-current">{{ number_format($finalPrice, 0, '.', ' ') }}</span>
+                        @if ($finalPrice < $basePrice)
+                            <span class="single__price-old">{{ number_format($basePrice, 0, '.', ' ') }}</span>
+                        @endif
+                    </div>
+                    @if ($product->stock)
+                        <span class="single__stock {{ $product->stock->quantity > 0 ? 'is-available' : 'is-empty' }}">
+                            <span class="single__stock-dot"></span>
+                            @if ($product->stock->quantity > 0)
+                                В наличии: {{ $product->stock->quantity }}
+                            @else
+                                Нет в наличии
+                            @endif
+                        </span>
                     @endif
+                </div>
 
+                <div class="single__cta">
                     <button class="single__button add-to-cart" data-id="{{ $product->id }}">
+                        Купить
                     </button>
 
                     <div class="qty-controls" id="qty-controls">
-                        <button class="product-card__plus qty-plus"></button>
+                        <button class="product-card__minus qty-minus" aria-label="Уменьшить"></button>
                         <span id="qty-value">1</span>
-                        <button class="product-card__minus qty-minus"></button>
+                        <button class="product-card__plus qty-plus" aria-label="Увеличить"></button>
                     </div>
                 </div>
 
-                <div class="single__desc">
-                    <p>{{ $product->localized_description }}</p>
-                </div>
-
-                <div class="product__meta-list">
-                    <div>
-                        Цена:
-                        <span class="product__price">{{ number_format($finalPrice, 0, '.', ' ') }}</span>
-                        @if ($finalPrice < $basePrice)
-                            <span class="product__price-old">{{ number_format($basePrice, 0, '.', ' ') }}</span>
-                        @endif
+                @if ($product->localized_description)
+                    <div class="single__section">
+                        <h3 class="single__section-title">Описание</h3>
+                        <div class="single__desc">
+                            <p>{{ $product->localized_description }}</p>
+                        </div>
                     </div>
+                @endif
 
-                    @if ($product->category)
-                        <div>Категория: {{ $product->category->localized_name ?? $product->category->name }}</div>
-                    @endif
-
-                    @if ($product->stock)
-                        <div>В наличии: {{ $product->stock->quantity }}</div>
-                    @endif
-
-                    @if ($attributesGrouped->isNotEmpty())
-                        <div>
-                            Атрибуты:
-                            @foreach ($attributesGrouped as $attributeName => $items)
-                                <div>
-                                    <strong>{{ $attributeName }}:</strong>
-                                    {{ $items->pluck('pivot.value')->unique()->implode(', ') }}
+                @if ($specPairs->isNotEmpty() || $attributesGrouped->isNotEmpty())
+                    <div class="single__section">
+                        <h3 class="single__section-title">Характеристики</h3>
+                        <dl class="single__attrs">
+                            @foreach ($specPairs as $label => $value)
+                                <div class="single__attr">
+                                    <dt>{{ $label }}</dt>
+                                    <dd>{{ $value }}</dd>
                                 </div>
                             @endforeach
-                        </div>
-                    @endif
-                </div>
+
+                            @foreach ($attributesGrouped as $attributeName => $items)
+                                <div class="single__attr">
+                                    <dt>{{ $attributeName }}</dt>
+                                    <dd>{{ $items->pluck('pivot.value')->unique()->implode(', ') }}</dd>
+                                </div>
+                            @endforeach
+                        </dl>
+                    </div>
+                @endif
+
             </div>
         </div>
     </div>
 @endsection
 
 @section('nav')
-    <div class="navigation">
-        <ul class="menu">
-            <li class="menu__item icon-home">
-                <a href="{{ route('webapp') }}" id="menu-home"></a>
-            </li>
-
-            <li class="menu__item icon-cart badge-container">
-                <a href="{{ route('webapp.cart') }}" id="bottom-cart-btn"></a>
-                <span id="bottom-cart-badge" class="cart-badge" style="display:none">0</span>
-            </li>
-
-            <li class="menu__item icon-favs">
-                <a href="{{ route('webapp.favorites') }}" id="menu-favs"></a>
-            </li>
-
-            <li class="menu__item icon-user">
-                <a href="{{ route('webapp.profile') }}" id="menu-profile"></a>
-            </li>
-        </ul>
-    </div>
+    @include('webapp.partials.bottom-nav')
 @endsection
 
 @section('scripts')

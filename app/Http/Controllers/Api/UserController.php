@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Telegram\Api;
 
 use App\Models\BotUser;
 use App\Models\Order;
+use App\Services\TelegramService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -36,28 +37,91 @@ class UserController
         ]);
     }
 
-    public function checkActive(Request $request)
+    public function checkActive(Request $request): JsonResponse
     {
         $chatId = $request->header('X-CHAT-ID');
 
-    //    if (! $chatId) {
-    //        return response()->json(['active' => false]);
-    //    }
+        if (! $chatId) {
+            return response()->json([
+                'status' => 'need_company',
+                'active' => false,
+                'exists' => false,
+            ]);
+        }
 
         $user = BotUser::query()->where('chat_id', $chatId)->first();
 
-        return response()->json([
-            'active' => true,
-            'exists' => (bool) $user,
-        ]);
+        if (! $user) {
+            return response()->json([
+                'status' => 'need_company',
+                'active' => false,
+                'exists' => false,
+            ]);
+        }
 
-        if (! $user || ! $user->is_active) {
-            return response()->view('webapp.blocked', [], 403);
+        if ($user->is_active && $user->step === 'done') {
+            return response()->json([
+                'status' => 'active',
+                'active' => true,
+                'exists' => true,
+            ]);
+        }
+
+        if ($user->step === 'pending_approval') {
+            return response()->json([
+                'status' => 'pending',
+                'active' => false,
+                'exists' => true,
+            ]);
         }
 
         return response()->json([
-            'active' => (bool) ($user && $user->is_active),
-            'exists' => (bool) $user,
+            'status' => 'need_company',
+            'active' => false,
+            'exists' => true,
+            'prefill' => [
+                'first_name' => $user->first_name,
+                'phone' => $user->phone,
+                'company_name' => $user->company_name,
+            ],
+        ]);
+    }
+
+    public function requestAccess(Request $request, TelegramService $telegram): JsonResponse
+    {
+        $validated = $request->validate([
+            'chat_id' => ['required'],
+            'company_name' => ['required', 'string', 'max:255'],
+            'first_name' => ['nullable', 'string', 'max:100'],
+            'phone' => ['nullable', 'string', 'max:32'],
+            'uname' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $user = BotUser::firstOrNew(['chat_id' => $validated['chat_id']]);
+
+        if ($user->exists && $user->is_active && $user->step === 'done') {
+            return response()->json([
+                'success' => true,
+                'status' => 'active',
+            ]);
+        }
+
+        $user->fill([
+            'company_name' => $validated['company_name'],
+            'first_name' => $validated['first_name'] ?? $user->first_name,
+            'phone' => $validated['phone'] ?? $user->phone,
+            'uname' => $validated['uname'] ?? $user->uname,
+            'is_active' => false,
+            'step' => 'pending_approval',
+        ]);
+
+        $user->save();
+
+        $telegram->notifyAdminAccessRequest($user);
+
+        return response()->json([
+            'success' => true,
+            'status' => 'pending',
         ]);
     }
 }

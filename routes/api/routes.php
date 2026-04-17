@@ -18,6 +18,7 @@ Route::prefix('webapp')
 
         // user
         Route::get('check-user', [UserController::class, 'checkActive']);
+        Route::post('access-request', [UserController::class, 'requestAccess']);
         Route::get('user/info', [UserController::class, 'info']);
 
         // favorites

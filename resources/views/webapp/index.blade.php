@@ -1,381 +1,6 @@
 @extends('webapp.layout')
 
 @section('head')
-    <style>
-        .lazy-img {
-            filter: blur(10px);
-            transition: .3s;
-        }
-
-        .lazy-img.loaded {
-            filter: blur(0);
-        }
-
-        .search-box {
-            padding-top: 15px;
-            padding-bottom: 15px;
-        }
-
-        #product-search {
-            width: 100%;
-            padding: 12px 14px; 
-            border-radius: 12px;
-            border: 1px solid #741C28;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .search-form {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .search-form input {
-            width: 100%;
-            padding: 12px 44px 12px 14px;
-            border-radius: 12px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .favicon-btn {
-            position: absolute;
-            right: 8px;
-            width: 20px;
-            height: 20px;
-            border: none;
-            background: url('/search.png') no-repeat center;
-            background-size: contain;
-            cursor: pointer;
-            opacity: .75;
-        }
-
-        .favicon-btn:hover {
-            opacity: 1;
-        }
-
-        /* стиль всех кнопок */
-        button:not(.order-type-tab),
-        .product__btn,
-        .product-card__plus,
-        .product-card__minus,
-        .favicon-btn {
-            background-color: #000 !important;
-            color: #fff !important;
-        }
-
-        .order-type-tab {
-            background-color: #fff !important;
-            color: #000 !important;
-            border: 2px solid #000 !important;
-        }
-
-        .order-type-tab.active {
-            background-color: #000 !important;
-            color: #fff !important;
-        }
-
-        .product__item {
-            position: relative;
-        }
-
-        .product__discount {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            background: #d70000;
-            color: #fff;
-            font-size: 12px;
-            font-weight: 700;
-            padding: 4px 6px;
-            line-height: 1;
-            z-index: 12;
-        }
-
-        .slider {
-            margin: 10px -10px 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .slider__track {
-            display: flex;
-            transition: transform 0.4s ease;
-            will-change: transform;
-        }
-
-        .slider__slide {
-            min-width: 100%;
-            display: block;
-            text-decoration: none;
-            position: relative;
-        }
-
-        .slider__image {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .slider__caption {
-            position: absolute;
-            left: 12px;
-            bottom: 10px;
-            background: rgba(0, 0, 0, 0.65);
-            color: #fff;
-            font-size: 14px;
-            padding: 6px 8px;
-        }
-
-        .slider__dots {
-            display: flex;
-            justify-content: center;
-            gap: 6px;
-            margin-top: 8px;
-        }
-
-        .slider__dot {
-            width: 6px;
-            height: 6px;
-            background: #111;
-            opacity: 0.3;
-            cursor: pointer;
-        }
-
-        .slider__dot.active {
-            opacity: 1;
-        }
-
-        .slider__btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 32px;
-            height: 32px;
-            border: none;
-            background: #000;
-            color: #fff;
-            opacity: 0.75;
-            cursor: pointer;
-            z-index: 2;
-        }
-
-        .slider__btn:hover {
-            opacity: 1;
-        }
-
-        .slider__btn--prev {
-            left: 6px;
-        }
-
-        .slider__btn--next {
-            right: 6px;
-        }
-
-        .filters-accordion {
-            margin: 10px 0 16px;
-            border: 1px solid #eee;
-            border-radius: 12px;
-            background: #fff;
-            overflow: hidden;
-        }
-
-        .filters-accordion summary {
-            list-style: none;
-            cursor: pointer;
-            padding: 12px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .filters-accordion summary::-webkit-details-marker {
-            display: none;
-        }
-
-        .filters-accordion__body {
-            padding: 0 12px 12px;
-        }
-
-        .filters__values--column {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 6px;
-        }
-
-        .filters__category {
-            width: 100%;
-        }
-
-        /* ===== ORDER TYPE TABS ===== */
-        .order-type-tabs {
-            display: flex;
-            gap: 8px;
-            margin: 12px 0 16px;
-        }
-
-        .order-type-tab {
-            flex: 1;
-            padding: 11px;
-            border: 2px solid #000;
-            background: #fff;
-            color: #000;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background .2s, color .2s;
-            letter-spacing: .3px;
-        }
-
-        .order-type-tab.active {
-            background: #000 !important;
-            color: #fff !important;
-        }
-
-        /* ===== RX FORM ===== */
-        .rx-form {
-            padding: 4px 0 80px;
-        }
-
-        .rx-eye-block {
-            background: #f9f9f9;
-            border: 1px solid #e0e0e0;
-            padding: 14px;
-            margin-bottom: 12px;
-        }
-
-        .rx-eye-title {
-            font-weight: 700;
-            font-size: 14px;
-            margin-bottom: 12px;
-            color: #111;
-        }
-
-        .rx-fields {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .rx-field label {
-            display: block;
-            font-size: 11px;
-            font-weight: 600;
-            color: #555;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: .5px;
-        }
-
-        .rx-field input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-            outline: none;
-            box-sizing: border-box;
-        }
-
-        .rx-field input:focus {
-            border-color: #741C28;
-        }
-
-        .rx-order-btn {
-            width: 100%;
-            padding: 14px;
-            background: #000 !important;
-            color: #fff !important;
-            border: none;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 16px;
-        }
-
-        /* ===== RX MODAL ===== */
-        .rx-modal-wrap {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, .55);
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            z-index: 9999;
-            padding: 12px;
-        }
-
-        .rx-modal-body {
-            background: #fff;
-            width: 100%;
-            max-width: 420px;
-            padding: 18px 16px 20px;
-            animation: modalUp .25s ease-out;
-            position: relative;
-        }
-
-        @keyframes modalUp {
-            from {
-                transform: translateY(100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .rx-modal-body h3 {
-            margin: 10px 0 6px;
-            font-size: 15px;
-            font-weight: 600;
-        }
-
-        .rx-modal-close {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 28px;
-            height: 28px;
-            border: none;
-            background: #000;
-            color: #fff;
-            font-size: 18px;
-            line-height: 1;
-            cursor: pointer;
-        }
-
-        .rx-modal-body input,
-        .rx-modal-body select {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-            margin-bottom: 10px;
-            outline: none;
-            box-sizing: border-box;
-        }
-
-        .rx-modal-body input:focus,
-        .rx-modal-body select:focus {
-            border-color: #741C28;
-        }
-
-        #rx-confirm-btn {
-            width: 100%;
-            margin-top: 14px;
-            padding: 14px;
-            border: none;
-            background: #000 !important;
-            color: #fff !important;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-    </style>
 @endsection
 
 @section('content')
@@ -395,8 +20,7 @@
             <form action="{{ url()->current() }}" method="get" class="search-form">
                 <input type="text" name="query" id="product-search" placeholder="{{ __('webapp.search_placeholder') }}"
                        value="{{ $query ?? request('query') }}">
-                <button type="submit" class="search-btn favicon-btn"
-                        style="background-color: transparent!important;"></button>
+                <button type="submit" class="search-btn favicon-btn"></button>
             </form>
         </div>
 
@@ -436,10 +60,9 @@
                         <form action="{{ url()->current() }}" method="get" class="filters">
                             <input type="hidden" name="query" value="{{ $query ?? request('query') }}">
                             @if (($categoryTree ?? collect())->isNotEmpty())
-                                <div class="filters__group" style="margin-bottom:12px;">
-                                    <div class="filters__title" style="font-weight:600; margin-bottom:6px;">Категории</div>
-                                    <div class="filters__values filters__values--column"
-                                         style="display:flex; flex-wrap:wrap; gap:8px;">
+                                <div class="filters__group">
+                                    <div class="filters__title">Категории</div>
+                                    <div class="filters__values filters__values--column">
                                         @include('webapp.partials.category-filter-options', [
                                             'categories' => $categoryTree,
                                             'selectedCategoryId' => $selectedCategoryId ?? null,
@@ -449,13 +72,11 @@
                                 </div>
                             @endif
                             @foreach ($attributes as $attribute)
-                                <div class="filters__group" style="margin-bottom:12px;">
-                                    <div class="filters__title" style="font-weight:600; margin-bottom:6px;">
-                                        {{ $attribute->name }}</div>
-                                    <div class="filters__values" style="display:flex; flex-wrap:wrap; gap:8px;">
+                                <div class="filters__group">
+                                    <div class="filters__title">{{ $attribute->name }}</div>
+                                    <div class="filters__values">
                                         @foreach ($attribute->values as $value)
-                                            <label
-                                                style="display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:10px; background:#f6f6f6; font-size:13px;">
+                                            <label>
                                                 <input type="checkbox" name="attributes[{{ $attribute->id }}][]"
                                                        value="{{ $value->value }}" @checked(in_array($value->value, $selectedAttributes[$attribute->id] ?? []))>
                                                 <span>{{ $value->value }}</span>
@@ -464,11 +85,9 @@
                                     </div>
                                 </div>
                             @endforeach
-                            <div class="filters__actions" style="display:flex; gap:8px; margin-top:8px;">
-                                <button type="submit"
-                                        style="padding:8px 12px; border-radius:10px; border:none; background:#000; color:#fff; font-size:13px;">Применить</button>
-                                <a href="{{ url()->current() }}"
-                                   style="padding:8px 12px; border-radius:10px; border:none; background:#000; color:#fff; text-decoration:none; font-size:13px;">Сбросить</a>
+                            <div class="filters__actions">
+                                <button type="submit">Применить</button>
+                                <a href="{{ url()->current() }}">Сбросить</a>
                             </div>
                         </form>
                     </div>
@@ -624,26 +243,7 @@
 @endsection
 
 @section('nav')
-    <div class="navigation">
-        <ul class="menu">
-            <li class="menu__item icon-home">
-                <a href="{{ route('webapp') }}" id="menu-home"></a>
-            </li>
-
-            <li class="menu__item icon-cart badge-container">
-                <a href="{{ route('webapp.cart') }}" id="bottom-cart-btn"></a>
-                <span id="bottom-cart-badge" class="cart-badge" style="display:none">0</span>
-            </li>
-
-            <li class="menu__item icon-favs">
-                <a href="{{ route('webapp.favorites') }}" id="menu-favs"></a>
-            </li>
-
-            <li class="menu__item icon-user">
-                <a href="{{ route('webapp.profile') }}" id="menu-profile"></a>
-            </li>
-        </ul>
-    </div>
+    @include('webapp.partials.bottom-nav', ['navActive' => 'home'])
 @endsection
 
 @section('scripts')

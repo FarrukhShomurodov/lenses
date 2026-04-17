@@ -46,28 +46,7 @@
 
 
 @section('nav')
-    <div class="navigation">
-        <ul class="menu">
-
-            <li class="menu__item icon-home">
-                <a href="{{ route('webapp') }}" id="menu-home"></a>
-            </li>
-
-            <li class="menu__item icon-cart badge-container">
-                <a href="{{ route('webapp.cart') }}" id="bottom-cart-btn"></a>
-                <span id="bottom-cart-badge" class="cart-badge" style="display:none">0</span>
-            </li>
-
-            <li class="menu__item icon-favs">
-                <a href="{{ route('webapp.favorites') }}" id="menu-favs"></a>
-            </li>
-
-            <li class="menu__item icon-user">
-                <a href="{{ route('webapp.profile') }}" id="menu-profile"></a>
-            </li>
-
-        </ul>
-    </div>
+    @include('webapp.partials.bottom-nav', ['navActive' => 'favs'])
 @endsection
 
 @section('scripts')
